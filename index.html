@@ -1,0 +1,479 @@
+<html>
+<head>
+<title>Fluffywatch!</title>
+<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+<link rel="shortcut icon" href="/ficon.ico" type="image/x-icon">
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.0/jquery.scrollTo.min.js"></script>
+<!-- <link href="http://vjs.zencdn.net/5.0.2/video-js.css" rel="stylesheet">
+<script>window.HELP_IMPROVE_VIDEOJS = false;</script>
+<script src="/cinema/js/video.min.js"></script> -->
+<style>
+/*Header styles*/
+#header-container{
+    position: fixed;
+    top: 0%;
+    left: 0%;
+    z-index: 999999;
+    opacity: 0;
+}
+
+#header-container:hover{
+    opacity: 1;
+}
+
+#button-refresh{
+    float: left;
+    margin-right: 10px;
+}
+
+.header-button{
+    margin-right: 10px;
+}
+
+#playlist-button{
+    margin-right: 30px;
+}
+
+#next-button{
+    margin-right: 30px;
+}
+
+#video{
+    height: 100%;
+    width: 100%;
+}
+
+.header-text{
+    margin-right: 20px;
+}
+
+.modal-wide {
+    /* new custom width */
+    width: 1000px;
+    /* must be half of the width, minus scrollbar on the left (30px) */
+    margin-left: -200px;
+}
+/*END HEADER*/
+
+/*PLAYER STYLES*/
+#player-container{
+    position: fixed;
+    height: 100%;
+    left: 0px;
+    background-color: black;
+}
+
+#player-container video{
+    height: 100%;
+    width: 100%;
+}
+/*END PLAYER*/
+
+/*CHAT STYLES*/
+#chat-container{
+    padding: 4px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    height: 100%;
+    background: #1b1e26;
+    position: fixed;
+    right: 0px;
+}
+
+#chat-message-container{
+    height: 100%;
+    overflow-y: scroll;
+    padding-left: 1px;
+    padding-right: 1px;
+    color: #aaa;
+}
+
+#sidebar-body{
+    height: 100%;
+    padding-bottom: 30px;
+}
+
+#chat-input{
+    margin-top: -26px;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-bottom: 0px;
+    width: 100%;
+    bottom: 0px;
+    box-shadow: 0px -10px 5px #323a47;
+}
+
+#chat-input-field{
+    width: 100%;
+    margin-right: 5px;
+}
+
+.chatmsg:nth-child(even) {
+    background: #242833;
+}
+
+.chatmsg{
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.chat-from{
+    font-size: 0.9em;
+}
+
+#chat-dragbar{
+    position: fixed;
+    height: 100%;
+    width: 5px;
+    background-color: #7f8da3;
+    cursor: pointer;
+}
+
+.chat-body{
+    word-wrap: break-word;
+    font-size: 0.9em;
+}
+
+.chat-sys .chat-body{
+    font-weight: bold;
+}
+
+.chat-sys{
+    color: #778aaf;
+    background-color: inherit;
+ }
+
+.chat-mod .chat-from::before{
+    content: "[M] ";
+    color: #66a;
+}
+
+.chat-master .chat-from::before{
+    content: "[A] ";
+    color: #a44;
+}
+
+#announcement{
+    position: fixed;
+    font-size: 1.5em;
+    color: white;
+    z-index: 100;
+    background-color: black;
+}
+
+/*END CHAT*/
+
+</style>
+</head>
+<body>
+<!-- <div id="announcement">
+<p>Yearly one piece christmas stream starting in: <span id="start-countdown"></span></p>
+</div>
+ --><div>
+    <div id="player-container">
+        <video id="video-stream" controls></video>
+    </div>
+    <div id="chat-container" >
+        <div id="sidebar-body">
+            <div id="chat-message-container">
+            </div>
+        </div>
+        <div id="chat-input">
+            <input type="text" id="chat-input-field"></input>
+        </div>
+    </div>
+    <div id="chat-dragbar">
+    </div>
+</div>
+
+
+<div id="header-container" class="well well-sm">
+    <button type="button" id="settings-button" class="btn btn-default header-button" data-toggle="modal" data-tooltip="tooltip" data-target="#settings-modal" data-placement="bottom" title="Transcoder settings">
+        <span class="glyphicon glyphicon-wrench"></span>
+    </button>
+
+    <button type="button" id="playlist-button" class="btn btn-default header-button" data-toggle="modal" data-tooltip="tooltip" data-target="#playlist-modal" data-placement="bottom" title="Playlist">
+        <span class="glyphicon glyphicon-list"></span>
+    </button>
+    
+    <!-- PLayback controlls -->
+    <button type="button" id="previous-button" class="btn btn-default header-button" data-tooltip="tooltip" data-placement="bottom" title="Previous playlist element">
+        <span class="glyphicon glyphicon-fast-backward"></span>
+    </button>
+   <!--  <button type="button" id="seek-back-button" class="btn btn-default header-button" data-tooltip="tooltip" data-placement="bottom" title="Seek backwards (15s)">
+        <span class="glyphicon glyphicon-backward"></span>
+    </button> -->
+    <button type="button" id="pause-button" class="btn btn-default header-button hidden" data-tooltip="tooltip" data-placement="bottom" title="Pause">
+        <span class="glyphicon glyphicon-pause"></span>
+    </button>
+    <button type="button" id="play-button" class="btn btn-default header-button hidden" data-tooltip="tooltip" data-placement="bottom" title="Play/Resume">
+        <span class="glyphicon glyphicon-play"></span>
+    </button>
+   <!--  <button type="button" id="seek-forward-button" class="btn btn-default header-button" data-tooltip="tooltip" data-placement="bottom" title="Seek forward (15s)">
+        <span class="glyphicon glyphicon-forward"></span>
+    </button> -->
+    <button type="button" id="next-button" class="btn btn-default header-button" data-tooltip="tooltip" data-placement="bottom" title="Next playlist element">
+        <span class=" glyphicon glyphicon-fast-forward"></span>
+    </button>
+
+    <!-- Status -->
+    <span class="glyphicon glyphicon-stats" ></span> <strong id="header-viewers" class="header-text" data-tooltip="tooltip" data-placement="bottom" title="Viewers">?</strong>
+    <span class="glyphicon glyphicon-info-sign"></span> <strong id="header-status" class="header-text" data-tooltip="tooltip" data-placement="bottom" title="Status of stream">?</strong>
+    <span class="glyphicon glyphicon-time"></span> <strong id="header-timestamp" class="header-text" data-tooltip="tooltip" data-placement="bottom" title="Timestamp(hh:mm:ss)">?</strong>
+    <span class="glyphicon glyphicon-film"></span> <strong id="header-nowplaying" data-tooltip="tooltip" data-placement="bottom" title="Currently being played">?</strong>
+</div>
+
+
+<!-- Settings modal -->
+<div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="btn btn-default" id="button-refresh">
+                    <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                </button>
+                <h4 class="modal-title">Settings</h4>
+            </div>
+
+            <div class="modal-body"> 
+                <form>
+                    <div class="form-group">
+                        <label for="settings-scale">Scale (width)</label>
+                        <input type="text" id="settings-scale" value="1280">
+                        <p class="help-block">To keep aspect ratio specify only width</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-max">Max bitrate(kb)</label>
+                        <input type="number" id="settings-max" value="2000">
+                        <p class="help-block">Recommended: around 2k for 720p, around 4k/5k for 1080p</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-preset">x264 Preset</label>
+                        <input type="text" id="settings-preset" value="veryfast">
+                        <p class="help-block">One of: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-streams">Streams</label>
+                        <input type="text" id="settings-streams" value="0 1">
+                        <p class="help-block">Most often stream 0 is video and 1 is audio, but if this file has multiple audio streams you can select the 2nd one by putting "0 2" instead</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-seek">Seek</label>
+                        <input type="text" id="settings-seek" value="00:00:00">
+                        <p class="help-block">Seek for the next item played, will be reset to 0 after that, in format hours:minutes:seconds</p>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="settings-subs"> Burn in default subtitles
+                        </label>
+                    </div>
+<!--                     <div class="form-group">
+                        <label for="settings-subs">Subtitles</label>
+                        <input type="number" id="settings-subs" value="-1">
+                        <p class="help-block">Burn in subtitles, only subs embedded in the video file can be burned in, specify the sub index. (0 is default subs, 1 is second, -1 is disabled)</p>
+                    </div>
+ --> 
+                    <button type="button" class="btn btn-default" id="button-save-settings">
+                        <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span> Save Server settings
+                    </button>
+                    <div class="modal-header">
+                        <h4 class="modal-title">Client Settings</h4>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-key">Secret Key to the mystery of life</label>
+                        <input type="password" id="settings-key">
+                        <p class="help-block">May be needed for some actions (playlist editing, controlling playback etc...)</p>
+                    </div>
+                    <div>
+                        <label for="login-button">Attempt login</label>
+                        <button id="login-button" type="button" class="btn btn-default">Login</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Playlist modal -->
+<div class="modal fade" id="playlist-modal" tabindex="-1" role="dialog" aria-labelledby="playlist-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <button type="button" id="playlist-add-button" class="btn btn-default headload-module module-echo-canceler-button pull-left"  data-toggle="modal" data-target="#playlist-add-modal" data-tooltip="tooltip" data-placement="bottom" title="Add an item to the end of the playlist">
+                    <span class="glyphicon glyphicon-plus"></span>
+                </button>
+                <button type="button" class="btn btn-default header-button pull-left"  data-toggle="modal" data-target="#playlist-clear-modal" data-tooltip="tooltip" data-placement="bottom" title="Clear playlist">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </button>
+                <button type="button" id="playlist-reload-button" class="btn btn-default header-button pull-left"  data-toggle="modal" data-tooltip="tooltip" data-placement="bottom" title="Reload playlist">
+                    <span class="glyphicon glyphicon-repeat"></span>
+                </button>
+                <h4 class="modal-title">Playlist</h4>
+            </div>
+            <div class="modal-body"> 
+                <table class="table table-condensed">
+                    <theader>
+                        <tr>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th>Season.Episode</th>
+                            <th>Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </theader>
+                    <tbody id="playlist-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Playlist item adding modal -->
+<div class="modal fade" id="playlist-add-modal" tabindex="-1" role="dialog" aria-labelledby="playlist-add-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Add Item</h4>
+            </div>
+            <div class="modal-body"> 
+                <h4 class="modal-title">By full path</h4>
+                <form>
+                    <div class="form-group">
+                        <label for="playlist-add-path">Path</label>
+                        <input type="text" id="playlist-add-path" placeholder="/some/path/to/video/file.mkv">
+                    </div>
+                    <button type="button" id="playlist-add-path-button" class="btn btn-default header-button" data-tooltip="tooltip" data-placement="bottom" title="Add item by full path">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                </form>
+                <h4 class="modal-title">By TV show</h4>
+                <form>
+                    <div class="form-group">
+                        <label for="playlist-tv-search">Show search</label>
+                        <input type="text" id="playlist-tv-search" placeholder="some tv show">
+                    </div>
+
+                    <div id="playlist-tv-search-results">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playlist-tv-season">Season</label>
+                        <input type="number" id="playlist-tv-season" value="1">
+                        <label for="playlist-tv-episode">Episode</label>
+                        <input type="number" id="playlist-tv-episode" value="1">
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="playlist-tv-add-all">Add all episodes starting from this one, to the playlist
+                        </label>
+                    </div>
+                    <button type="button" id="playlist-add-tv-button" class="btn btn-default header-button" data-tooltip="tooltip" data-placement="bottom" title="Add tv show episode(s)">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                </form>
+                <h4 class="modal-title">By movie</h4>
+                <form>
+                    <div class="form-group">
+                        <label for="playlist-movie-search">Movie search</label>
+                        <input type="text" id="playlist-movie-search" placeholder="some movie title">
+                    </div>
+                    
+                    <div id="playlist-movie-search-results">
+                    </div>
+
+                    <button type="button" id="playlist-add-movie-button" class="btn btn-default header-button" data-tooltip="tooltip" data-placement="bottom" title="Add movie">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error modal -->
+<div class="modal fade" id="error-modal" tabindex="-1" role="dialog" aria-labelledby="error-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="error-modal">Error</h4>
+            </div>
+            <div class="modal-body"> 
+                <p id="error-body"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info modal -->
+<div class="modal fade" id="info-modal" tabindex="-1" role="dialog" aria-labelledby="info-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Info</h4>
+            </div>
+            <div class="modal-body"> 
+                <p id="info-body"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="playlist-clear-modal" tabindex="-1" role="dialog" aria-labelledby="playlist-clear-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                Clear playlist?
+                <button type="button" id="playlist-clear-button" class="btn btn-default header-button"  data-toggle="modal" data-target="#playlist-clear-modal" data-tooltip="tooltip" data-placement="bottom" title="Clear playlist">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- <script type='text/javascript' src='/static/cinema/js/encoding.js'></script>
+<script type='text/javascript' src='/static/cinema/js/hls-full.js'></script>
+<script type='text/javascript' src='/static/cinema/js/net.js'></script>
+<script type='text/javascript' src='/static/cinema/js/nethandlers.js'></script>
+<script type='text/javascript' src='/static/cinema/js/fluffy.js'></script>
+ -->
+<script type='text/javascript' src='/js/hls.js'></script>
+<!-- <script type="text/javascript" src="https://content.jwplatform.com/libraries/2IksDM7F.js"></script> -->
+<script type='text/javascript' src='/js/net.js'></script>
+<script type='text/javascript' src='/js/nethandlers.js'></script>
+<script type='text/javascript' src='/js/fluffy.js'></script>
+
+<script src="/js/linkify.min.js"></script>
+<script src="/js/linkify-jquery.min.js"></script>
+
+</body>
+</html>
+
