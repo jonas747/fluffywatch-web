@@ -21,7 +21,8 @@ var NetEvents = {
     EvtNotification:          20,
     EvtAuth:                  22,
     EvtChatCmd:               23,
-    EvtReloadPlaylist:        24
+    EvtReloadPlaylist:        24,
+    EvtPlaylistAddPath:       25
 }
 
 var pw = ""
@@ -156,6 +157,16 @@ $("#playlist-add-movie-button").on("click", function(){
     }
 
     engine.sendMessage(NetEvents.EvtPlaylistAdd, req)
+})
+
+$("#playlist-add-path-button").on("click", function(){
+    var path = $("#playlist-add-path").val();
+
+    var req = {
+        path: item
+    }
+
+    engine.sendMessage(NetEvents.EvtPlaylistAddPath, req)
 })
 
 function playItem(index){    
@@ -298,13 +309,9 @@ $(function(){
             appendErrorMaxRetry : 200,
         };
 
-        // videojs("video", {}, function(){
-        //   // Player (this) is initialized and ready.
-        // });
 
         var video = document.getElementById('video-stream');
         var hls = new Hls(config);
-        //hls.loadSource('http://jonas747.com:8080/hls/live.m3u8');
         hls.attachMedia(video);
         hls.on(Hls.Events.MEDIA_ATTACHED, function () {
             console.log("video and hls.js are now bound together !");
@@ -360,6 +367,8 @@ $(function(){
             // }else{
                 
             // }
+
+            // Gave up on handling errors correctly and just reset the whole fucking thing
             resetStream();
             console.log(data);
         });
@@ -394,47 +403,8 @@ $(function(){
             lastTime = currentTime;
 
         }, 1000)
-
-        // var countDownTarget = 1481257800000;
-        // // Countdown updater
-        // window.setInterval(function(){
-        //     var timeLeft = countDownTarget - Date.now() 
-        //     var shouldveStarted = timeLeft < 0
-        //     timeLeft = Math.abs(timeLeft);
-
-        //     var totalSeconds = timeLeft/1000;
-        //     var clockSeconds = Math.floor(totalSeconds%60)
-        //     var minutes = Math.floor((totalSeconds/60)%60)
-        //     var hours = Math.floor((totalSeconds/60)/60)
-
-        //     if(hours < 10){
-        //         hours = "0" + hours
-        //         if(hours == 0){
-        //             hours = "00"
-        //         }
-        //     }
-
-        //     if(minutes < 10){
-        //         minutes = "0" + minutes
-        //         if(minutes == 0){
-        //             minutes = "00"
-        //         }
-        //     }
-
-
-        //     var timeStr = hours + ":" + minutes + ":" + clockSeconds;
-
-        //     var content;
-        //     if (shouldveStarted) {
-        //         content = "Should have started "+timeStr+", refresh the page?"
-        //     }else{
-        //         content = timeStr
-        //     }
-
-        //     $("#start-countdown").text(content)
-
-        // }, 1000)
     }else{
+        alert("hls is not supported in your browser")
         console.log("HLS NOT SUPPORTED CANT TO LIVESTREAM PANIC PANIC PANIC KILL HITLER, HACK TIME?? CALL KUNG FURY");
     }
 
@@ -476,9 +446,10 @@ $(function(){
  
     querySettings();
 
-    insertChatMessage("sys", "Welcome to my yearly 24/7 full run through one piece stream!", "sys");
-    insertChatMessage("sys", "Type '/sys' to show/hide sys notifications (leaving,joining etc..)", "sys");
-    insertChatMessage("sys", "Join the one piece discord here: discord.gg/onepiece", "sys");
+    //insertChatMessage("sys", "Welcome to my yearly 24/7 full run through one piece stream!", "sys");
+    //insertChatMessage("sys", "Type '/sys' to show/hide sys notifications (leaving,joining etc..)", "sys");
+    //insertChatMessage("sys", "Join the one piece discord here: discord.gg/onepiece", "sys");
+    insertChatMessage("sys", "Welcome to fluffywatch", "sys");
 
     document.getElementById('chat-input-field').onkeypress = function(e){
         if (!e) e = window.event;
